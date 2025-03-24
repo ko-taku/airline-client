@@ -5,31 +5,30 @@ if (typeof window !== "undefined") {
   localStorage.setItem('flight', JSON.stringify(flightList));
 }
 
-export function getFlight(filterBy = {}) {
+export async function getFlight(filterBy = {}) {
   // HINT: 가장 마지막 테스트를 통과하기 위해, fetch를 이용합니다. 아래 구현은 완전히 삭제되어도 상관없습니다.
   // TODO: 아래 구현을 REST API 호출로 대체하세요.
 
+  // console.log(filterBy);
 
-  let json = []
-  if (typeof window !== "undefined") {
-    json = localStorage.getItem("flight");
-  }
-  const flight = JSON.parse(json) || [];
+  // 검색조건이 없을 땐, 다 보여줘.
+  // 검색조건이 있을 땐, 필터링해서 보어줘.
 
-  return new Promise((resolve) => {
-    const filtered = flight.filter((flight) => {
-      let condition = true;
-      if (filterBy.departure) {
-        condition = condition && flight.departure === filterBy.departure
-      }
-      if (filterBy.destination) {
-        condition = condition && flight.destination === filterBy.destination
-      }
-      return condition;
-    })
-
-    setTimeout(() => {
-      resolve(filtered)
-    }, 500);
+  // 검색 조건이 없을 때 리턴 값
+  const res = await fetch('http://localhost:4999/flight').then((flight) => {
+    return flight.json();
   });
+
+  // 검색 조건이 있을 때 리턴 값
+  const filteredRes = res.filter((flight) => {
+    if (filterBy.destination === flight.destination) {
+      return flight;
+    }
+  });
+
+  if (!filterBy.destination) {
+    return res;
+  } else {
+    return filteredRes;
+  }
 }

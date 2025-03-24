@@ -11,8 +11,10 @@ import json from '../resource/flightList';
 export default function Main() {
   const [condition, setCondition] = useState({
     departure: 'ICN',
+    destination: '',
   });
-  const [flightList, setFlightList] = useState(json);
+  const [flightList, setFlightList] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const search = ({ departure, destination }) => {
     if (
@@ -20,21 +22,31 @@ export default function Main() {
       condition.destination !== destination
     ) {
       console.log('condition 상태를 변경시킵니다');
+      setCondition({ departure, destination });
 
       // TODO:
     }
   };
 
-  const filterByCondition = (flight) => {
-    let pass = true;
-    if (condition.departure) {
-      pass = pass && flight.departure === condition.departure;
+  const handleFlight = async () => {
+    setIsLoading(true);
+    try {
+      const FlightData = await getFlight(condition);
+      setFlightList(FlightData);
+    } catch (err) {
+      console.error(err);
     }
-    if (condition.destination) {
-      pass = pass && flight.destination === condition.destination;
-    }
-    return pass;
+
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    setIsLoading(false);
+
   };
+
+  useEffect(() => { handleFlight(); }
+    , [condition]);
+
+
 
   global.search = search; // 실행에는 전혀 지장이 없지만, 테스트를 위해 필요한 코드입니다. 이 코드는 지우지 마세요!
 
@@ -47,7 +59,7 @@ export default function Main() {
 
       <main>
         <h1>여행가고 싶을 땐, Airline</h1>
-        <Search />
+        <Search onSearch={search} />
         <div className="table">
           <div className="row-header">
             <div className="col">출발</div>
@@ -56,7 +68,7 @@ export default function Main() {
             <div className="col">도착 시각</div>
             <div className="col"></div>
           </div>
-          <FlightList list={flightList.filter(filterByCondition)} />
+          {isLoading ? <LoadingIndicator /> : <FlightList list={flightList} />}
         </div>
 
         <div className="debug-area">
